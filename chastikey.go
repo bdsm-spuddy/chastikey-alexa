@@ -31,6 +31,7 @@ type Lock struct {
 	LockedBy string `json:"lockedBy"`
         LockFrozen int64 `json:"lockFrozen"`
 	StartTime int64 `json:"timestampLocked"`
+        LastPicked int64 `json:"timestampLastPicked"`
 	Status string `json:"status"`
 	Combination string `json:"combination"`
 }
@@ -80,7 +81,9 @@ func time_to_days(val int) string {
 		val -= mins * 60
 	}
 
-	res += format_time(val, "second")
+	if val > 0 {
+		res += format_time(val, "second")
+	}
 
 	return strings.TrimSpace(res)
 }
@@ -103,7 +106,11 @@ func parse_api(json_str string) string {
 	res += ".  "
 	for x,y := range s {
 		dur := time.Now().Unix()-y.StartTime
-		res += "Lock " + strconv.Itoa(x+1) + " is held by " + y.LockedBy + ", and has been running for " + time_to_days(int(dur)) + ".  "
+		pick := time.Now().Unix()-y.LastPicked
+		res += "Lock " + strconv.Itoa(x+1) + " "
+		res += "is held by " + y.LockedBy + ", "
+		res += "and has been running for " + time_to_days(int(dur)) + ".  "
+                res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
 		if (y.LockFrozen != 0) {
 			res += "This lock is frozen.  "
 		}
@@ -117,7 +124,7 @@ func talk_to_chastikey(cmd string) (string, string) {
 		return os.Getenv("DEBUG"),""
 	}
 
-	url := "https://api.chastikey.com/v0.2/" + cmd + "?userID=" + UserID
+	url := "https://api.chastikey.com/v0.4/" + cmd + "?userID=" + UserID
 
 	fmt.Println("Calling " + cmd)
 	resp, err := http.Get(url)

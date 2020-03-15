@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	alexa "github.com/mikeflynn/go-alexa/skillserver"
@@ -10,29 +11,30 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 )
 
 // Information we read from the config file
 type Configuration struct {
-	SkillID string
-	UserID  string
+	SkillID   string
+	ApiID     string
+	ApiSecret string
+	UserName  string
 }
 
 // Global variables based on that config
 var configuration Configuration
-var UserID string
 
 // These are the fields from the Chastikey API I care about
 type Lock struct {
-	LockID   int64 `json:"lockID"`
-	LockedBy string `json:"lockedBy"`
-        LockFrozen int64 `json:"lockFrozen"`
-	StartTime int64 `json:"timestampLocked"`
-        LastPicked int64 `json:"timestampLastPicked"`
-	Status string `json:"status"`
+	LockID      int64  `json:"lockID"`
+	LockedBy    string `json:"lockedBy"`
+	LockFrozen  int64  `json:"lockFrozen"`
+	StartTime   int64  `json:"timestampLocked"`
+	LastPicked  int64  `json:"timestampLastPicked"`
+	Status      string `json:"status"`
 	Combination string `json:"combination"`
 }
 
@@ -92,26 +94,26 @@ func parse_api(json_str string) string {
 	var chastikey Chastikey
 	err := json.Unmarshal([]byte(json_str), &chastikey)
 	if err != nil {
-		return "Could not understand API results: "+err.Error()
+		return "Could not understand API results: " + err.Error()
 	}
 
 	// We want to look at the chastity session
 	s := chastikey.Locks
 
-        cnt := len(s)
+	cnt := len(s)
 	res := "You have " + strconv.Itoa(cnt) + " lock"
-        if cnt != 1 {
+	if cnt != 1 {
 		res += "s"
 	}
 	res += ".  "
-	for x,y := range s {
-		dur := time.Now().Unix()-y.StartTime
-		pick := time.Now().Unix()-y.LastPicked
+	for x, y := range s {
+		dur := time.Now().Unix() - y.StartTime
+		pick := time.Now().Unix() - y.LastPicked
 		res += "Lock " + strconv.Itoa(x+1) + " "
 		res += "is held by " + y.LockedBy + ", "
 		res += "and has been running for " + time_to_days(int(dur)) + ".  "
-                res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
-		if (y.LockFrozen != 0) {
+		res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
+		if y.LockFrozen != 0 {
 			res += "This lock is frozen.  "
 		}
 	}
@@ -121,13 +123,25 @@ func parse_api(json_str string) string {
 
 func talk_to_chastikey(cmd string) (string, string) {
 	if os.Getenv("DEBUG") != "" {
-		return os.Getenv("DEBUG"),""
+		return os.Getenv("DEBUG"), ""
 	}
 
-	url := "https://api.chastikey.com/v0.4/" + cmd + "?userID=" + UserID
+	url := "https://api.chastikey.com/v0.5/" + cmd
 
 	fmt.Println("Calling " + cmd)
-	resp, err := http.Get(url)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("Username="+configuration.UserName)))
+
+	if err != nil {
+		return "", "Problems setting up the API: " + err.Error()
+	}
+
+	req.Header.Set("ClientID", configuration.ApiID)
+	req.Header.Set("ClientSecret", configuration.ApiSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return "", "Problems calling the API: " + err.Error()
@@ -150,7 +164,7 @@ func talk_to_chastikey(cmd string) (string, string) {
 
 // Ask Chastikey for the user status and generate a friendly response
 func do_status() string {
-	s, err := talk_to_chastikey("listlocks.php")
+	s, err := talk_to_chastikey("lockeedata.php")
 	if err != "" {
 		return err
 	}
@@ -223,25 +237,22 @@ func main() {
 
 	parse := gonfig.GetConf(config_file, &configuration)
 	if parse != nil {
-		fmt.Println("Error parsing " + config_file + "\n",parse)
+		fmt.Println("Error parsing "+config_file+"\n", parse)
 		os.Exit(-1)
 	}
 
-	amazon_skill_id := configuration.SkillID
-	UserID = configuration.UserID
-
-	if amazon_skill_id == "" {
+	if configuration.SkillID == "" {
 		fmt.Println("Skill ID is not defined.  Aborted")
 		os.Exit(255)
 	}
 
-	if UserID == "" {
-		fmt.Println("Chastikey UserID is not defined.	Aborted")
+	if configuration.UserName == "" {
+		fmt.Println("Chastikey UserName is not defined.	Aborted")
 		os.Exit(255)
 	}
 
 	if cmd == "server" {
-		start_server(amazon_skill_id)
+		start_server(configuration.SkillID)
 	} else {
 		fmt.Println(parse_command(cmd, Args))
 	}

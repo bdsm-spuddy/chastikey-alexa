@@ -20,6 +20,9 @@ below).
 
 An account with the [Chastikey app](https://chastikey.com/)
 
+An API key and secret, generated from the Chastikey app, required to
+talk to [v0.5 of the API](http://api.chastikey.com/docs/).
+
 ## GoLang dependencies:
 
 I use the following modules (`go get` them)
@@ -57,24 +60,27 @@ On Linux/MacOS it will look in `$HOME`.  Examples may be:
     /Users/bdsm/.chastikey
     /home/bdsm/.chastikey
 
-It needs two values:
+It needs four values:
 
-    SkillID -- this is the skill ID from the Alexa Console (see later)
-    UserID -- this is your Chastikey Secret key
-
+    SkillID   -- this is the skill ID from the Alexa Console (see later)
+    ApiID     -- this is your Chastikey API Key generated from the App
+    ApiSecret -- this is your Chastikey API Secret generated from the App
+    Username  -- this is your username in the Chastikey App.
 eg
 
     % cat ~/.chastikey
     {
       "SkillID":"amzn1.ask.skill.12345678-9abc-def0-1234-56789abcdef0",
-      "UserID":"01234-56789-ABCDE-F0123"
+      "ApiID":"1234567890abcdefghijklmnopqrstuv",
+      "ApiSecret":"1234567890abcdefghijklmnopqrstuv",
+      "UserName":"yourusername"
     }
 
 
 Can test the code talks to the API from the CLI
 
     % ./chastikey status
-    Using configuration file /home/bdm/.chastikey
+    Using configuration file /home/bdsm/.chastikey
     Calling listlocks.php
     You have 1 lock.  Lock 1 is held by keyholder, and has been running for 81 days 10 hours 24 minutes 20 seconds.  
 

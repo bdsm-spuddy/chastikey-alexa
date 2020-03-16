@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -90,38 +91,8 @@ func time_to_days(val int) string {
 	return strings.TrimSpace(res)
 }
 
-func parse_api(json_str string) string {
-	var chastikey Chastikey
-	err := json.Unmarshal([]byte(json_str), &chastikey)
-	if err != nil {
-		return "Could not understand API results: " + err.Error()
-	}
 
-	// We want to look at the chastity session
-	s := chastikey.Locks
-
-	cnt := len(s)
-	res := "You have " + strconv.Itoa(cnt) + " lock"
-	if cnt != 1 {
-		res += "s"
-	}
-	res += ".  "
-	for x, y := range s {
-		dur := time.Now().Unix() - y.StartTime
-		pick := time.Now().Unix() - y.LastPicked
-		res += "Lock " + strconv.Itoa(x+1) + " "
-		res += "is held by " + y.LockedBy + ", "
-		res += "and has been running for " + time_to_days(int(dur)) + ".  "
-		res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
-		if y.LockFrozen != 0 {
-			res += "This lock is frozen.  "
-		}
-	}
-
-	return res
-}
-
-func talk_to_chastikey(cmd string) (string, string) {
+func do_talk_to_chastikey(cmd string) (string, string) {
 	if os.Getenv("DEBUG") != "" {
 		return os.Getenv("DEBUG"), ""
 	}
@@ -162,14 +133,58 @@ func talk_to_chastikey(cmd string) (string, string) {
 	return res, ""
 }
 
+func talk_to_chastikey(cmd string) ([]Lock ,string) {
+	var chastikey Chastikey
+
+	json_str, http_err := do_talk_to_chastikey(cmd)
+	if http_err != "" {
+		return nil, http_err
+	}
+
+	err := json.Unmarshal([]byte(json_str), &chastikey)
+	if err != nil {
+		return nil, "Could not understand API results: " + err.Error()
+	}
+
+	// We want to look at the Locks
+	locks := chastikey.Locks
+
+	// Let's make sure the locks are in LockID order.  They
+	// probably are, anyway, but let's not make assumptions :-)
+	// This will try to maintain consistency across calls.
+	sort.Slice(locks, func(i, j int) bool {
+		return locks[i].LockID < locks[j].LockID
+	})
+
+	return locks, ""
+}
+
 // Ask Chastikey for the user status and generate a friendly response
 func do_status() string {
-	s, err := talk_to_chastikey("lockeedata.php")
+	locks, err := talk_to_chastikey("lockeedata.php")
 	if err != "" {
 		return err
 	}
 
-	return parse_api(s)
+	cnt := len(locks)
+	res := "You have " + strconv.Itoa(cnt) + " lock"
+	if cnt != 1 {
+		res += "s"
+	}
+	res += ".  "
+	for x, y := range locks {
+		dur := time.Now().Unix() - y.StartTime
+		pick := time.Now().Unix() - y.LastPicked
+		res += "Lock " + strconv.Itoa(x+1) + " "
+		res += "is held by " + y.LockedBy + ", "
+		res += "and has been running for " + time_to_days(int(dur)) + ".  "
+		res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
+		if y.LockFrozen != 0 {
+			res += "This lock is frozen.  "
+		}
+	}
+
+	return res
 }
 
 // Validate the command passed

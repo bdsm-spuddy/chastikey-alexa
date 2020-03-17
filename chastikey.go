@@ -91,7 +91,6 @@ func time_to_days(val int) string {
 	return strings.TrimSpace(res)
 }
 
-
 func do_talk_to_chastikey(cmd string) (string, string) {
 	if os.Getenv("DEBUG") != "" {
 		return os.Getenv("DEBUG"), ""
@@ -133,7 +132,7 @@ func do_talk_to_chastikey(cmd string) (string, string) {
 	return res, ""
 }
 
-func talk_to_chastikey(cmd string) ([]Lock ,string) {
+func talk_to_chastikey(cmd string) ([]Lock, string) {
 	var chastikey Chastikey
 
 	json_str, http_err := do_talk_to_chastikey(cmd)

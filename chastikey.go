@@ -31,6 +31,7 @@ var configuration Configuration
 // These are the fields from the Chastikey API I care about
 type Lock struct {
 	LockID      int64  `json:"lockID"`
+	LockName    string `json:"lockName"`
 	LockedBy    string `json:"lockedBy"`
 	LockFrozen  int64  `json:"lockFrozen"`
 	StartTime   int64  `json:"timestampLocked"`
@@ -174,8 +175,11 @@ func do_status() string {
 	for x, y := range locks {
 		dur := time.Now().Unix() - y.StartTime
 		pick := time.Now().Unix() - y.LastPicked
-		res += "Lock " + strconv.Itoa(x+1) + " "
-		res += "is held by " + y.LockedBy + ", "
+		res += "Lock " + strconv.Itoa(x+1)
+		if (y.LockName != "" ) {
+			res += ", named " + y.LockName + ","
+		}
+		res += " is held by " + y.LockedBy + ", "
 		res += "and has been running for " + time_to_days(int(dur)) + ".  "
 		res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
 		if y.LockFrozen != 0 {

@@ -27,7 +27,29 @@
                     "name": "status",
                     "slots": [],
                     "samples": [
+                        "for status",
                         "status"
+                    ]
+                },
+                {
+                    "name": "lockid",
+                    "slots": [
+                        {
+                            "name": "lockname",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "about lock {lockname}",
+                        "about {lockname}"
+                    ]
+                },
+                {
+                    "name": "listlocks",
+                    "slots": [],
+                    "samples": [
+                        "list",
+                        "list locks"
                     ]
                 }
             ],

@@ -35,9 +35,21 @@ type Lock struct {
 	LockedBy    string `json:"lockedBy"`
 	LockFrozen  int64  `json:"lockFrozen"`
 	StartTime   int64  `json:"timestampLocked"`
+	UnlockTime  int64  `json:"timestampUnlocked"`
 	LastPicked  int64  `json:"timestampLastPicked"`
 	Status      string `json:"status"`
 	Combination string `json:"combination"`
+	// Card information
+	CardHidden  int   `json:"cardInfoHidden"`
+	DoubleCards int   `json:"doubleUpCards"`
+	FreezeCards int   `json:"freezeCards"`
+	GreenCards  int   `json:"greenCards"`
+	GreenPicked int   `json:"greenCardsPicked"`
+	RedCards    int   `json:"redCards"`
+	ResetCards  int   `json:"resetCards"`
+	YellowCards int   `json:"yellowCards"`
+	Fixed       int   `json:"fixed"`
+	Expected    int64 `json:"timestampExpectedUnlock"`
 }
 
 type Chastikey struct {
@@ -159,6 +171,41 @@ func talk_to_chastikey(cmd string) ([]Lock, string) {
 	return locks, ""
 }
 
+func one_lock(x int, y Lock) string {
+	res := ""
+	dur := time.Now().Unix() - y.StartTime
+	if y.UnlockTime != 0 {
+		dur = y.UnlockTime - y.StartTime
+	}
+	pick := time.Now().Unix() - y.LastPicked
+	res += "Lock " + strconv.Itoa(x)
+	if y.LockName != "" {
+		res += ", named " + y.LockName + ","
+	}
+	res += " is held by " + y.LockedBy + ", and "
+	if y.UnlockTime != 0 {
+		res += "ran"
+	} else {
+		res += "has been running"
+	}
+	res += " for " + time_to_days(int(dur)) + ".  "
+	if y.Combination == "" {
+		if y.Fixed == 0 {
+			res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
+		} else {
+			res += "This is a fixed lock.  "
+		}
+
+		if y.LockFrozen != 0 {
+			res += "This lock is frozen.  "
+		}
+	} else {
+		res += "This lock can be opened; the combination is " + y.Combination + ".  "
+	}
+
+	return res
+}
+
 // Ask Chastikey for the user status and generate a friendly response
 func do_status() string {
 	locks, err := talk_to_chastikey("lockeedata.php")
@@ -173,28 +220,139 @@ func do_status() string {
 	}
 	res += ".  "
 	for x, y := range locks {
-		dur := time.Now().Unix() - y.StartTime
-		pick := time.Now().Unix() - y.LastPicked
-		res += "Lock " + strconv.Itoa(x+1)
-		if (y.LockName != "" ) {
-			res += ", named " + y.LockName + ","
-		}
-		res += " is held by " + y.LockedBy + ", "
-		res += "and has been running for " + time_to_days(int(dur)) + ".  "
-		res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
-		if y.LockFrozen != 0 {
-			res += "This lock is frozen.  "
-		}
+		res += one_lock(x+1, y)
 	}
 
 	return res
 }
 
+func report_lock(id int, lock Lock) string {
+	res := one_lock(id, lock)
+
+	if lock.Combination == "" {
+		if lock.CardHidden != 0 {
+			res += "Card info is hidden"
+		} else {
+			if lock.Fixed == 0 {
+				res += "You have picked " + strconv.Itoa(lock.GreenPicked) + " green card"
+				if lock.GreenPicked != 1 {
+					res += "s"
+				}
+				res += ".  There are " + strconv.Itoa(lock.GreenCards) + " green cards, "
+				res += strconv.Itoa(lock.RedCards) + " red cards, "
+				res += strconv.Itoa(lock.YellowCards) + " yellow cards, "
+				res += strconv.Itoa(lock.FreezeCards) + " freeze cards, "
+				res += strconv.Itoa(lock.DoubleCards) + " double cards, "
+				res += "and " + strconv.Itoa(lock.ResetCards) + " reset cards remaining."
+			} else {
+				dur := lock.Expected - time.Now().Unix()
+				if dur < 0 {
+					res += "This lock is ready to unlock"
+				} else {
+					res += "This lock is expected to finish in " + time_to_days(int(dur))
+				}
+			}
+		}
+	}
+	return res
+}
+
+func lock_summary(locks []Lock) string {
+	res := "You have the following locks.  "
+	for x, y := range locks {
+		res += "Lock " + strconv.Itoa(x+1)
+		if y.LockName != "" {
+			res += ", named " + y.LockName + ","
+		}
+		res += " is held by " + y.LockedBy + ". "
+	}
+	return res
+}
+
+func list_locks() string {
+	locks, errstr := talk_to_chastikey("lockeedata.php")
+	if errstr != "" {
+		return errstr
+	}
+	return lock_summary(locks)
+}
+
+// This is meant to search the locks by name, and return the matching
+// lock.  However Amazon Alexa voice training means that things like "collar"
+// get matched as "color" and this really doesn't work well.  So this code
+// is currently unused.
+func get_lock_by_name(arg []string) string {
+	if len(arg) != 1 {
+		return "You need to specify one number"
+	}
+
+	locks, errstr := talk_to_chastikey("lockeedata.php")
+	if errstr != "" {
+		return errstr
+	}
+
+	lockid := -1
+	srch := strings.ToLower(arg[0])
+
+	for x, y := range locks {
+		if strings.ToLower(y.LockName) == srch {
+			lockid = x
+		}
+	}
+
+	if lockid == -1 {
+		return "I could not find a lock with that name. " + lock_summary(locks)
+	}
+
+	return report_lock(lockid+1, locks[lockid])
+}
+
+func get_lock_by_id(arg []string) string {
+	if len(arg) != 1 {
+		return "You need to specify one number"
+	}
+
+	id, err := strconv.Atoi(arg[0])
+	// Ideally we'd try to find this by name, but that doesn't work
+	// (see comments on get_lock_by_name definition) so we just
+	// return an error message
+	if err != nil {
+		// return get_lock_by_name(arg)
+		return "The value you specified wasn't understandable as a number"
+	}
+
+	locks, errstr := talk_to_chastikey("lockeedata.php")
+	if errstr != "" {
+		return errstr
+	}
+
+	cnt := len(locks)
+	if id < 1 || id > cnt {
+		return "You need to pick a number between 1 and " + strconv.Itoa(cnt)
+	}
+
+	return report_lock(id, locks[id-1])
+}
+
+func get_help() string {
+	return "Commands I understand are: " +
+		"Ask chasty key for status.  " +
+		"Ask chasty key about lock 1.  " +
+		"Ask chasty key to list locks."
+}
+
 // Validate the command passed
-// We should only ever have one parameter, so pass that when needed
 func parse_command(cmd string, args []string) string {
 	if cmd == "status" {
 		return do_status()
+	} else if cmd == "lockid" {
+		return get_lock_by_id(args)
+	} else if cmd == "listlocks" {
+		return list_locks()
+	} else if cmd == "AMAZON.HelpIntent" {
+		return get_help()
+	} else if strings.HasPrefix(cmd, "AMAZON") {
+		return ""
 	} else {
 		return "I don't know how to " + cmd
 	}

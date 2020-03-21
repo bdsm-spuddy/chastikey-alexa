@@ -65,7 +65,10 @@ It needs four values:
     SkillID   -- this is the skill ID from the Alexa Console (see later)
     ApiID     -- this is your Chastikey API Key generated from the App
     ApiSecret -- this is your Chastikey API Secret generated from the App
-    Username  -- this is your username in the Chastikey App.
+    Username  -- this is your DiscordID from the Chastikey Discord server
+
+You can join the Discord server from the menu at [Chastikey app](https://chastikey.com/).  You can find your DiscordID from the [support docs](https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)
+
 eg
 
     % cat ~/.chastikey
@@ -73,7 +76,7 @@ eg
       "SkillID":"amzn1.ask.skill.12345678-9abc-def0-1234-56789abcdef0",
       "ApiID":"1234567890abcdefghijklmnopqrstuv",
       "ApiSecret":"1234567890abcdefghijklmnopqrstuv",
-      "UserName":"yourusername"
+      "UserName":"yourdiscordid"
     }
 
 

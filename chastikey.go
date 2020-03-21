@@ -28,6 +28,9 @@ type Configuration struct {
 // Global variables based on that config
 var configuration Configuration
 
+// This may be set each for each request if the http request includes a name
+var UserName string
+
 // These are the fields from the Chastikey API I care about
 type Lock struct {
 	LockID      int64  `json:"lockID"`
@@ -113,7 +116,7 @@ func do_talk_to_chastikey(cmd string) (string, string) {
 
 	fmt.Println("Calling " + cmd)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("Username="+configuration.UserName)))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("Username="+UserName)))
 
 	if err != nil {
 		return "", "Problems setting up the API: " + err.Error()
@@ -361,6 +364,23 @@ func parse_command(cmd string, args []string) string {
 // Handle the Alexa query
 func EchoIntentHandler(echoReq *alexa.EchoRequest, echoResp *alexa.EchoResponse) {
 	var response string
+
+	// This is a kludge to allow for multiple users to be used.
+	// If the incoming request has a chastikey username in the userId
+	// field then we'll use that.  Otherwise fall back to the username
+	// in the config file
+	// This only works in dev mode ("?_dev=1") because otherwise the
+	// signature is broken.  dev mode also skips the application ID
+	// check.
+	// So this isn't really good, but it means other people can program
+	// their alexa devices to call my hosted instance without needing
+	// to run their own server.
+	UserName = echoReq.GetUserID()
+	if strings.HasPrefix(UserName, "amzn1.ask.account.") {
+		UserName = configuration.UserName
+	}
+
+	log.Println("Using username " + UserName)
 
 	fn := echoReq.GetIntentName()
 

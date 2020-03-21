@@ -116,7 +116,7 @@ func do_talk_to_chastikey(cmd string) (string, string) {
 
 	fmt.Println("Calling " + cmd)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("Username="+UserName)))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("DiscordID="+UserName)))
 
 	if err != nil {
 		return "", "Problems setting up the API: " + err.Error()
@@ -419,7 +419,7 @@ func start_server(amazon_skill_id string) {
 func main() {
 	Args := os.Args
 
-	// If no paramter is passed, default to "identify"
+	// If no paramter is passed, default to "server"
 	// otherwise split command line args
 	var cmd string = "server"
 	if len(Args) > 1 {
@@ -446,6 +446,8 @@ func main() {
 		fmt.Println("Chastikey UserName is not defined.	Aborted")
 		os.Exit(255)
 	}
+
+	UserName = configuration.UserName
 
 	if cmd == "server" {
 		start_server(configuration.SkillID)

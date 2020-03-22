@@ -40,6 +40,7 @@ type Lock struct {
 	StartTime   int64  `json:"timestampLocked"`
 	UnlockTime  int64  `json:"timestampUnlocked"`
 	LastPicked  int64  `json:"timestampLastPicked"`
+	NextPicked  int64  `json:"timestampNextPick"`
 	Status      string `json:"status"`
 	Combination string `json:"combination"`
 	// Card information
@@ -176,11 +177,14 @@ func talk_to_chastikey(cmd string) ([]Lock, string) {
 
 func one_lock(x int, y Lock) string {
 	res := ""
-	dur := time.Now().Unix() - y.StartTime
+	now := time.Now().Unix()
+	dur := now - y.StartTime
 	if y.UnlockTime != 0 {
 		dur = y.UnlockTime - y.StartTime
 	}
-	pick := time.Now().Unix() - y.LastPicked
+	pick := now - y.LastPicked
+	next := y.NextPicked - now
+
 	res += "Lock " + strconv.Itoa(x)
 	if y.LockName != "" {
 		res += ", named " + y.LockName + ","
@@ -195,6 +199,7 @@ func one_lock(x int, y Lock) string {
 	if y.Combination == "" {
 		if y.Fixed == 0 {
 			res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
+			res += "The next card can be picked in " + time_to_days(60*int(next/60)) + ".  "
 		} else {
 			res += "This is a fixed lock.  "
 		}

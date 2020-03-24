@@ -72,30 +72,30 @@ func UserHomeDir() string {
 	return os.Getenv("HOME") + "/"
 }
 
-func format_time(val int, name string) string {
-	res := strconv.Itoa(val) + " " + name
+func format_time(val int64, name string) string {
+	res := strconv.Itoa(int(val)) + " " + name
 	if val != 1 {
 		res += "s"
 	}
 	return res + " "
 }
 
-func time_to_days(val int) string {
+func time_to_days(val int64) string {
 	var res string
 
-	days := int(val / 86400)
+	days := int64(val / 86400)
 	if days > 0 {
 		res += format_time(days, "day")
 		val -= days * 86400
 	}
 
-	hours := int(val / 3600)
+	hours := int64(val / 3600)
 	if hours > 0 {
 		res += format_time(hours, "hour")
 		val -= hours * 3600
 	}
 
-	mins := int(val / 60)
+	mins := int64(val / 60)
 	if mins > 0 {
 		res += format_time(mins, "minute")
 		val -= mins * 60
@@ -183,7 +183,13 @@ func one_lock(x int, y Lock) string {
 		dur = y.UnlockTime - y.StartTime
 	}
 	pick := now - y.LastPicked
+	if pick > 59 {
+		pick = 60*int64(pick/60)
+	}
 	next := y.NextPicked - now
+	if next > 59 {
+		next = 60*int64(next/60)
+	}
 
 	res += "Lock " + strconv.Itoa(x)
 	if y.LockName != "" {
@@ -195,11 +201,17 @@ func one_lock(x int, y Lock) string {
 	} else {
 		res += "has been running"
 	}
-	res += " for " + time_to_days(int(dur)) + ".  "
+	res += " for " + time_to_days(dur) + ".  "
 	if y.Combination == "" {
 		if y.Fixed == 0 {
-			res += "The last card was picked " + time_to_days(60*int(pick/60)) + " ago.  "
-			res += "The next card can be picked in " + time_to_days(60*int(next/60)) + ".  "
+			res += "The last card was picked " + time_to_days(pick) + " ago.  "
+			res += "The next card can be picked "
+			if next <= 0 {
+				res += "now"
+			} else {
+				res += "in " + time_to_days(next)
+			}
+			res += ".  "
 		} else {
 			res += "This is a fixed lock.  "
 		}
@@ -257,7 +269,7 @@ func report_lock(id int, lock Lock) string {
 				if dur < 0 {
 					res += "This lock is ready to unlock"
 				} else {
-					res += "This lock is expected to finish in " + time_to_days(int(dur))
+					res += "This lock is expected to finish in " + time_to_days(dur)
 				}
 			}
 		}

@@ -205,13 +205,15 @@ func one_lock(x int, y Lock) string {
 	if y.Combination == "" {
 		if y.Fixed == 0 {
 			res += "The last card was picked " + time_to_days(pick) + " ago.  "
-			res += "The next card can be picked "
-			if next <= 0 {
-				res += "now"
-			} else {
-				res += "in " + time_to_days(next)
+			if y.LockFrozen == 0 {
+				res += "The next card can be picked "
+				if next <= 0 {
+					res += "now"
+				} else {
+					res += "in " + time_to_days(next)
+				}
+				res += ".  "
 			}
-			res += ".  "
 		} else {
 			res += "This is a fixed lock.  "
 		}

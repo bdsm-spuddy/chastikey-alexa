@@ -42,6 +42,8 @@ type Lock struct {
 	UnlockTime   int64  `json:"timestampUnlocked"`
 	LastPicked   int64  `json:"timestampLastPicked"`
 	NextPicked   int64  `json:"timestampNextPick"`
+	CardFrozTime int64  `json:"timestampFrozenByCard"`
+	HoldFrozTime int64  `json:"timestampFrozenByKeyholder"`
 	Status       string `json:"status"`
 	Combination  string `json:"combination"`
 	// Card information
@@ -220,13 +222,16 @@ func one_lock(x int, y Lock) string {
 		}
 
 		if y.LockFrozen != 0 {
+			var froztime int64
 			res += "This lock is frozen by "
 			if y.FrozenByCard != 0 {
 				res += "card draw"
+				froztime = y.CardFrozTime
 			} else {
 				res += "key holder"
+				froztime = y.HoldFrozTime
 			}
-			res += ".  "
+			res += " for " + time_to_days(now-froztime) + ".  "
 		}
 	} else {
 		res += "This lock can be opened; the combination is " + y.Combination + ".  "

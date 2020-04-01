@@ -75,12 +75,12 @@ func UserHomeDir() string {
 	return os.Getenv("HOME") + "/"
 }
 
-func format_time(val int64, name string) string {
-	res := strconv.Itoa(int(val)) + " " + name
+func plural(val int, name string) string {
+	res := strconv.Itoa(val) + " " + name
 	if val != 1 {
 		res += "s"
 	}
-	return res + " "
+	return res
 }
 
 func time_to_days(val int64) string {
@@ -88,24 +88,24 @@ func time_to_days(val int64) string {
 
 	days := int64(val / 86400)
 	if days > 0 {
-		res += format_time(days, "day")
+		res += plural(int(days), "day") + " "
 		val -= days * 86400
 	}
 
 	hours := int64(val / 3600)
 	if hours > 0 {
-		res += format_time(hours, "hour")
+		res += plural(int(hours), "hour") + " "
 		val -= hours * 3600
 	}
 
 	mins := int64(val / 60)
 	if mins > 0 {
-		res += format_time(mins, "minute")
+		res += plural(int(mins), "minute") + " "
 		val -= mins * 60
 	}
 
 	if val > 0 {
-		res += format_time(val, "second")
+		res += plural(int(val), "second")
 	}
 
 	return strings.TrimSpace(res)
@@ -248,11 +248,7 @@ func do_status() string {
 	}
 
 	cnt := len(locks)
-	res := "You have " + strconv.Itoa(cnt) + " lock"
-	if cnt != 1 {
-		res += "s"
-	}
-	res += ".  "
+	res := "You have " + plural(cnt, "lock") + ".  "
 	for x, y := range locks {
 		res += one_lock(x+1, y)
 	}
@@ -268,16 +264,13 @@ func report_lock(id int, lock Lock) string {
 			res += "Card info is hidden"
 		} else {
 			if lock.Fixed == 0 {
-				res += "You have picked " + strconv.Itoa(lock.GreenPicked) + " green card"
-				if lock.GreenPicked != 1 {
-					res += "s"
-				}
-				res += ".  There are " + strconv.Itoa(lock.GreenCards) + " green cards, "
-				res += strconv.Itoa(lock.RedCards) + " red cards, "
-				res += strconv.Itoa(lock.YellowCards) + " yellow cards, "
-				res += strconv.Itoa(lock.FreezeCards) + " freeze cards, "
-				res += strconv.Itoa(lock.DoubleCards) + " double cards, "
-				res += "and " + strconv.Itoa(lock.ResetCards) + " reset cards remaining."
+				res += "You have picked " + plural(lock.GreenPicked, "green card")
+				res += ".  There are " + plural(lock.GreenCards, "green card") + ", "
+				res += plural(lock.RedCards, "red card") + ", "
+				res += plural(lock.YellowCards, "yellow card") + ", "
+				res += plural(lock.FreezeCards, "freeze card") + ", "
+				res += plural(lock.DoubleCards, "double card") + ", "
+				res += "and " + plural(lock.ResetCards, "reset card") + " remaining."
 			} else {
 				dur := lock.Expected - time.Now().Unix()
 				if dur < 0 {

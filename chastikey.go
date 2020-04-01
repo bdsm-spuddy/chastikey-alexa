@@ -37,6 +37,7 @@ type Lock struct {
 	LockName    string `json:"lockName"`
 	LockedBy    string `json:"lockedBy"`
 	LockFrozen  int64  `json:"lockFrozen"`
+	FrozenByCard int64  `json:"lockFrozenByCard"`
 	StartTime   int64  `json:"timestampLocked"`
 	UnlockTime  int64  `json:"timestampUnlocked"`
 	LastPicked  int64  `json:"timestampLastPicked"`
@@ -219,7 +220,13 @@ func one_lock(x int, y Lock) string {
 		}
 
 		if y.LockFrozen != 0 {
-			res += "This lock is frozen.  "
+			res += "This lock is frozen by "
+			if y.FrozenByCard != 0 {
+				res += "card draw"
+			} else {
+				res += "key holder"
+			}
+			res += ".  "
 		}
 	} else {
 		res += "This lock can be opened; the combination is " + y.Combination + ".  "

@@ -33,17 +33,17 @@ var UserName string
 
 // These are the fields from the Chastikey API I care about
 type Lock struct {
-	LockID      int64  `json:"lockID"`
-	LockName    string `json:"lockName"`
-	LockedBy    string `json:"lockedBy"`
-	LockFrozen  int64  `json:"lockFrozen"`
+	LockID       int64  `json:"lockID"`
+	LockName     string `json:"lockName"`
+	LockedBy     string `json:"lockedBy"`
+	LockFrozen   int64  `json:"lockFrozen"`
 	FrozenByCard int64  `json:"lockFrozenByCard"`
-	StartTime   int64  `json:"timestampLocked"`
-	UnlockTime  int64  `json:"timestampUnlocked"`
-	LastPicked  int64  `json:"timestampLastPicked"`
-	NextPicked  int64  `json:"timestampNextPick"`
-	Status      string `json:"status"`
-	Combination string `json:"combination"`
+	StartTime    int64  `json:"timestampLocked"`
+	UnlockTime   int64  `json:"timestampUnlocked"`
+	LastPicked   int64  `json:"timestampLastPicked"`
+	NextPicked   int64  `json:"timestampNextPick"`
+	Status       string `json:"status"`
+	Combination  string `json:"combination"`
 	// Card information
 	CardHidden  int   `json:"cardInfoHidden"`
 	DoubleCards int   `json:"doubleUpCards"`
@@ -185,11 +185,11 @@ func one_lock(x int, y Lock) string {
 	}
 	pick := now - y.LastPicked
 	if pick > 59 {
-		pick = 60*int64(pick/60)
+		pick = 60 * int64(pick/60)
 	}
 	next := y.NextPicked - now
 	if next > 59 {
-		next = 60*int64(next/60)
+		next = 60 * int64(next/60)
 	}
 
 	res += "Lock " + strconv.Itoa(x)

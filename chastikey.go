@@ -223,7 +223,7 @@ func one_lock(x int, y Lock) string {
 
 		if y.LockFrozen != 0 {
 			var froztime int64
-			res += "This lock is frozen by "
+			res += "This lock has been frozen by "
 			if y.FrozenByCard != 0 {
 				res += "card draw"
 				froztime = y.CardFrozTime

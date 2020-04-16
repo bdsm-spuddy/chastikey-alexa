@@ -205,7 +205,10 @@ func one_lock(x int, y Lock) string {
 		res += "has been running"
 	}
 	res += " for " + time_to_days(dur) + ".  "
-	if y.Combination == "" {
+
+	if y.Status == "ReadyToUnlock" {
+		res += "This lock can be unlocked.  "
+	} else if y.Combination == "" {
 		if y.Fixed == 0 {
 			res += "The last card was picked " + time_to_days(pick) + " ago.  "
 			if y.LockFrozen == 0 {

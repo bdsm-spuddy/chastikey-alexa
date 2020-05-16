@@ -86,6 +86,11 @@ func plural(val int, name string) string {
 func time_to_days(val int64) string {
 	var res string
 
+	// If the requested time is over an hour, strip off the seconds
+	if val >= 3600 {
+		val = 60 * int64(val/60)
+	}
+
 	days := int64(val / 86400)
 	if days > 0 {
 		res += plural(int(days), "day") + " "
@@ -185,14 +190,8 @@ func one_lock(x int, y Lock) string {
 	if y.UnlockTime != 0 {
 		dur = y.UnlockTime - y.StartTime
 	}
-	pick := now - y.LastPicked
-	if pick > 59 {
-		pick = 60 * int64(pick/60)
-	}
+	// pick := now - y.LastPicked
 	next := y.NextPicked - now
-	if next > 59 {
-		next = 60 * int64(next/60)
-	}
 
 	res += "Lock " + strconv.Itoa(x)
 	if y.LockName != "" {
@@ -210,7 +209,7 @@ func one_lock(x int, y Lock) string {
 		res += "This lock can be unlocked.  "
 	} else if y.Combination == "" {
 		if y.Fixed == 0 {
-			res += "The last card was picked " + time_to_days(pick) + " ago.  "
+			// res += "The last card was picked " + time_to_days(pick) + " ago.  "
 			if y.LockFrozen == 0 {
 				res += "The next card can be picked "
 				if next <= 0 {

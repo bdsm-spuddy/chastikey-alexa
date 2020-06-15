@@ -243,7 +243,11 @@ func one_lock(x int, y Lock) string {
 			res += " for " + time_to_days(now-froztime) + ".  "
 		}
 	} else {
-		res += "This lock can be opened; the combination is " + y.Combination + ".  "
+		res += "This lock can be opened; the combination is"
+		for _, c := range y.Combination {
+			res += ", " + string(c)
+		}
+		res += ".  "
 	}
 
 	return res

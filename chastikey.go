@@ -40,7 +40,7 @@ type Lock struct {
 	FrozenByCard int64  `json:"lockFrozenByCard"`
 	StartTime    int64  `json:"timestampLocked"`
 	UnlockTime   int64  `json:"timestampUnlocked"`
-	LastPicked   int64  `json:"timestampLastPicked"`
+	LastPicked   int64  `json:"timestampRealLastPicked"`
 	NextPicked   int64  `json:"timestampNextPick"`
 	CardFrozTime int64  `json:"timestampFrozenByCard"`
 	HoldFrozTime int64  `json:"timestampFrozenByKeyholder"`
@@ -190,7 +190,12 @@ func one_lock(x int, y Lock) string {
 	if y.UnlockTime != 0 {
 		dur = y.UnlockTime - y.StartTime
 	}
-	// pick := now - y.LastPicked
+	// If people are on an older version of the app the LastPicked
+	// won't be populated, so set it to now
+	if y.LastPicked == 0 {
+		y.LastPicked = now
+	}
+	pick := now - y.LastPicked
 	next := y.NextPicked - now
 
 	res += "Lock " + strconv.Itoa(x)
@@ -209,7 +214,9 @@ func one_lock(x int, y Lock) string {
 		res += "This lock can be unlocked.  "
 	} else if y.Combination == "" {
 		if y.Fixed == 0 {
-			// res += "The last card was picked " + time_to_days(pick) + " ago.  "
+			if pick != 0 {
+				res += "The last card was picked " + time_to_days(pick) + " ago.  "
+			}
 			if y.LockFrozen == 0 {
 				res += "The next card can be picked "
 				if next <= 0 {

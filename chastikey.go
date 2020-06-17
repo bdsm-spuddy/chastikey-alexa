@@ -33,20 +33,20 @@ var UserName string
 
 // These are the fields from the Chastikey API I care about
 type Lock struct {
-	LockID       int64  `json:"lockID"`
-	LockName     string `json:"lockName"`
-	LockedBy     string `json:"lockedBy"`
-	LockFrozen   int64  `json:"lockFrozen"`
-	FrozenByCard int64  `json:"lockFrozenByCard"`
-	StartTime    int64  `json:"timestampLocked"`
-	UnlockTime   int64  `json:"timestampUnlocked"`
-	LastPicked   int64  `json:"timestampRealLastPicked"`
-	NextPicked   int64  `json:"timestampNextPick"`
-	CardFrozTime int64  `json:"timestampFrozenByCard"`
-	HoldFrozTime int64  `json:"timestampFrozenByKeyholder"`
-	Regularity   float64  `json:"regularity"`
-	Status       string `json:"status"`
-	Combination  string `json:"combination"`
+	LockID       int64   `json:"lockID"`
+	LockName     string  `json:"lockName"`
+	LockedBy     string  `json:"lockedBy"`
+	LockFrozen   int64   `json:"lockFrozen"`
+	FrozenByCard int64   `json:"lockFrozenByCard"`
+	StartTime    int64   `json:"timestampLocked"`
+	UnlockTime   int64   `json:"timestampUnlocked"`
+	LastPicked   int64   `json:"timestampRealLastPicked"`
+	NextPicked   int64   `json:"timestampNextPick"`
+	CardFrozTime int64   `json:"timestampFrozenByCard"`
+	HoldFrozTime int64   `json:"timestampFrozenByKeyholder"`
+	Regularity   float64 `json:"regularity"`
+	Status       string  `json:"status"`
+	Combination  string  `json:"combination"`
 	// Card information
 	CardHidden  int   `json:"cardInfoHidden"`
 	DoubleCards int   `json:"doubleUpCards"`

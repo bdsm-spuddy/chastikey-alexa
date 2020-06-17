@@ -44,6 +44,7 @@ type Lock struct {
 	NextPicked   int64  `json:"timestampNextPick"`
 	CardFrozTime int64  `json:"timestampFrozenByCard"`
 	HoldFrozTime int64  `json:"timestampFrozenByKeyholder"`
+	Regularity   float64  `json:"regularity"`
 	Status       string `json:"status"`
 	Combination  string `json:"combination"`
 	// Card information
@@ -209,6 +210,10 @@ func one_lock(x int, y Lock) string {
 		res += "has been running"
 	}
 	res += " for " + time_to_days(dur) + ".  "
+
+	if y.Regularity != 0 {
+		res += "Cards can be picked every " + time_to_days(int64(3600*y.Regularity)) + ".  "
+	}
 
 	if y.Status == "ReadyToUnlock" {
 		res += "This lock can be unlocked.  "

@@ -55,6 +55,7 @@ type Lock struct {
 	GreenPicked int   `json:"greenCardsPicked"`
 	RedCards    int   `json:"redCards"`
 	ResetCards  int   `json:"resetCards"`
+        StickyCards int   `json:"stickyCards"`
 	YellowCards int   `json:"yellowCards"`
 	Fixed       int   `json:"fixed"`
 	Expected    int64 `json:"timestampExpectedUnlock"`
@@ -82,6 +83,14 @@ func plural(val int, name string) string {
 		res += "s"
 	}
 	return res
+}
+
+func optional(val int, name string) string {
+	if val != 0 {
+		return plural(val,name)+", "
+	} else {
+		return ""
+	}
 }
 
 func time_to_days(val int64) string {
@@ -284,11 +293,14 @@ func report_lock(id int, lock Lock) string {
 			if lock.Fixed == 0 {
 				res += "You have picked " + plural(lock.GreenPicked, "green card")
 				res += ".  There are " + plural(lock.GreenCards, "green card") + ", "
-				res += plural(lock.RedCards, "red card") + ", "
-				res += plural(lock.YellowCards, "yellow card") + ", "
-				res += plural(lock.FreezeCards, "freeze card") + ", "
-				res += plural(lock.DoubleCards, "double card") + ", "
-				res += "and " + plural(lock.ResetCards, "reset card") + " remaining."
+				res += optional(lock.RedCards, "red card")
+				res += optional(lock.StickyCards, "sticky card")
+				res += optional(lock.YellowCards, "yellow card")
+				res += optional(lock.FreezeCards, "freeze card")
+				res += optional(lock.DoubleCards, "double card")
+				res += optional(lock.ResetCards, "reset card")
+				res = strings.TrimSuffix(res, ", ")
+				res += " remaining."
 			} else {
 				dur := lock.Expected - time.Now().Unix()
 				if dur < 0 {

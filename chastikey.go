@@ -55,7 +55,7 @@ type Lock struct {
 	GreenPicked int   `json:"greenCardsPicked"`
 	RedCards    int   `json:"redCards"`
 	ResetCards  int   `json:"resetCards"`
-        StickyCards int   `json:"stickyCards"`
+	StickyCards int   `json:"stickyCards"`
 	YellowCards int   `json:"yellowCards"`
 	Fixed       int   `json:"fixed"`
 	Expected    int64 `json:"timestampExpectedUnlock"`
@@ -87,7 +87,7 @@ func plural(val int, name string) string {
 
 func optional(val int, name string) string {
 	if val != 0 {
-		return plural(val,name)+", "
+		return plural(val, name) + ", "
 	} else {
 		return ""
 	}
@@ -212,7 +212,11 @@ func one_lock(x int, y Lock) string {
 	if y.LockName != "" {
 		res += ", named " + y.LockName + ","
 	}
-	res += " is held by " + y.LockedBy + ", and "
+	if y.LockedBy == "" {
+		res += " is a self-lock, and "
+	} else {
+		res += " is held by " + y.LockedBy + ", and "
+	}
 	if y.UnlockTime != 0 {
 		res += "ran"
 	} else {
@@ -242,6 +246,12 @@ func one_lock(x int, y Lock) string {
 			}
 		} else {
 			res += "This is a fixed lock.  "
+			dur := y.Expected - time.Now().Unix()
+			if dur < 0 {
+				res += "This lock is ready to unlock"
+			} else {
+				res += "This lock is expected to finish in " + time_to_days(dur)
+			}
 		}
 
 		if y.LockFrozen != 0 {
@@ -301,13 +311,6 @@ func report_lock(id int, lock Lock) string {
 				res += optional(lock.ResetCards, "reset card")
 				res = strings.TrimSuffix(res, ", ")
 				res += " remaining."
-			} else {
-				dur := lock.Expected - time.Now().Unix()
-				if dur < 0 {
-					res += "This lock is ready to unlock"
-				} else {
-					res += "This lock is expected to finish in " + time_to_days(dur)
-				}
 			}
 		}
 	}

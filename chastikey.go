@@ -40,7 +40,8 @@ type Lock struct {
 	FrozenByCard int64   `json:"lockFrozenByCard"`
 	StartTime    int64   `json:"timestampLocked"`
 	UnlockTime   int64   `json:"timestampUnlocked"`
-	LastPicked   int64   `json:"timestampRealLastPicked"`
+	LastPicked   int64   `json:"timestampLastPicked"`
+	RealLast     int64   `json:"timestampRealLastPicked"`
 	NextPicked   int64   `json:"timestampNextPick"`
 	CardFrozTime int64   `json:"timestampFrozenByCard"`
 	HoldFrozTime int64   `json:"timestampFrozenByKeyholder"`
@@ -200,6 +201,14 @@ func one_lock(x int, y Lock) string {
 	if y.UnlockTime != 0 {
 		dur = y.UnlockTime - y.StartTime
 	}
+
+	// Normally RealLast should hold the last time a card was picked
+	// but some versions of the app have a bug.  So we take the
+	// maximum of LastPicked and RealLast
+	if y.RealLast > y.LastPicked {
+		y.LastPicked = y.RealLast
+	}
+
 	// If people are on an older version of the app the LastPicked
 	// won't be populated, so set it to now
 	if y.LastPicked == 0 {
@@ -274,7 +283,7 @@ func one_lock(x int, y Lock) string {
 		res += ".  "
 	}
 
-	return res
+	return res + "\n"
 }
 
 // Ask Chastikey for the user status and generate a friendly response
@@ -285,7 +294,7 @@ func do_status() string {
 	}
 
 	cnt := len(locks)
-	res := "You have " + plural(cnt, "lock") + ".  "
+	res := "You have " + plural(cnt, "lock") + ".\n"
 	for x, y := range locks {
 		res += one_lock(x+1, y)
 	}

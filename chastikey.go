@@ -239,6 +239,8 @@ func one_lock(x int, y Lock) string {
 
 	if y.Status == "ReadyToUnlock" {
 		res += "This lock can be unlocked.  "
+	} else if y.Status == "AwaitingKeyholdersDecision" {
+		res += "This lock is waiting for keyholder decision.  "
 	} else if y.Combination == "" {
 		if y.Fixed == 0 {
 			if pick != 0 {

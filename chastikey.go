@@ -283,6 +283,9 @@ func one_lock(x int, y Lock) string {
 			res += ", " + string(c)
 		}
 		res += ".  "
+		if y.Status == "UnlockedFake" {
+			res += "This was a fake lock.  "
+		}
 	}
 
 	return res + "\n"

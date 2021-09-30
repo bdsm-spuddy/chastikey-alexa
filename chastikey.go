@@ -45,6 +45,7 @@ type Lock struct {
 	NextPicked   int64   `json:"timestampNextPick"`
 	CardFrozTime int64   `json:"timestampFrozenByCard"`
 	HoldFrozTime int64   `json:"timestampFrozenByKeyholder"`
+	DecisionTime int64   `json:"timestampRequestedKeyholdersDecision"`
 	Regularity   float64 `json:"regularity"`
 	Status       string  `json:"status"`
 	Combination  string  `json:"combination"`
@@ -240,7 +241,7 @@ func one_lock(x int, y Lock) string {
 	if y.Status == "ReadyToUnlock" {
 		res += "This lock can be unlocked.  "
 	} else if y.Status == "AwaitingKeyholdersDecision" {
-		res += "This lock is waiting for keyholder decision.  "
+		res += "This lock has been waiting for keyholder decision for " + time_to_days(now-y.DecisionTime) + ".  "
 	} else if y.Combination == "" {
 		if y.Fixed == 0 {
 			if pick != 0 {
